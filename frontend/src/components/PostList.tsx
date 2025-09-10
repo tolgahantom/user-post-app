@@ -16,6 +16,9 @@ const PostList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 5;
 
+  // Search
+  const [searchTerm, setSearchTerm] = useState("");
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -32,36 +35,41 @@ const PostList = () => {
       setPosts(postsData.slice(0, 20));
       setLoading(false);
     };
-
     fetchData();
   }, []);
 
-  // Add Post
+  // Add / Update / Delete
   const addPost = (newPost: Omit<Post, "id">) => {
     const id = posts.length ? Math.max(...posts.map((p) => p.id)) + 1 : 1;
     setPosts([...posts, { ...newPost, id }]);
     setIsModalOpen(false);
   };
 
-  // Update Post
   const updatePost = (updatedPost: Post) => {
     setPosts(posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
     setEditingPost(null);
     setIsModalOpen(false);
   };
 
-  // Delete Post
   const deletePost = (id: number) => {
     setPosts(posts.filter((p) => p.id !== id));
   };
 
   if (loading) return <Loader />;
 
-  // Pagination calculations
+  // 🔹 Filter first, then paginate
+  const filteredPosts = posts.filter((post) => {
+    const user = users.find((u) => u.id === post.userId);
+    return (
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user?.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
+
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
-  const totalPages = Math.ceil(posts.length / postsPerPage);
+  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -70,6 +78,21 @@ const PostList = () => {
           Posts
         </h1>
 
+        {/* Search */}
+        <div className="mb-4 flex justify-center">
+          <input
+            type="text"
+            placeholder="Search posts..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1); // arama yaparken sayfayı 1'e al
+            }}
+            className="border p-2 rounded w-full max-w-md"
+          />
+        </div>
+
+        {/* Posts Grid */}
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {currentPosts.map((post) => {
             const user = users.find((u) => u.id === post.userId);
@@ -106,6 +129,18 @@ const PostList = () => {
           })}
         </div>
 
+        {/* Floating Add Post Button */}
+        <button
+          onClick={() => {
+            setEditingPost(null);
+            setIsModalOpen(true);
+          }}
+          className="fixed bottom-16 right-6 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-3xl flex items-center justify-center shadow-lg transition"
+        >
+          +
+        </button>
+
+        {/* Pagination */}
         <div className="fixed bottom-0 left-0 w-full bg-gray-100 py-3 flex justify-center gap-2 shadow-inner">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
@@ -114,11 +149,9 @@ const PostList = () => {
           >
             Prev
           </button>
-
           <span className="px-4 py-1 font-bold">
             {currentPage} / {totalPages}
           </span>
-
           <button
             onClick={() =>
               setCurrentPage((prev) => Math.min(prev + 1, totalPages))
@@ -130,16 +163,7 @@ const PostList = () => {
           </button>
         </div>
 
-        <button
-          onClick={() => {
-            setEditingPost(null);
-            setIsModalOpen(true);
-          }}
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-3xl flex items-center justify-center shadow-lg transition"
-        >
-          +
-        </button>
-
+        {/* Modal */}
         <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}

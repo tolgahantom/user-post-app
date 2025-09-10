@@ -4,8 +4,9 @@ const Navbar = () => {
   return (
     <nav className="bg-gray-800 text-white shadow-md">
       <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">User-Post Application</h1>
-
+        <NavLink to={"/"}>
+          <h1 className="text-2xl font-bold">User-Post Application</h1>
+        </NavLink>
         <div className="flex gap-6">
           <NavLink
             to="/"
