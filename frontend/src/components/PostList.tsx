@@ -32,7 +32,24 @@ const PostList = () => {
     fetchData();
   }, []);
 
-  // Add, Update, Delete işlemleri aynı şekilde
+  // Add Post
+  const addPost = (newPost: Omit<Post, "id">) => {
+    const id = posts.length ? Math.max(...posts.map((p) => p.id)) + 1 : 1;
+    setPosts([...posts, { ...newPost, id }]);
+    setIsModalOpen(false);
+  };
+
+  // Update Post
+  const updatePost = (updatedPost: Post) => {
+    setPosts(posts.map((p) => (p.id === updatedPost.id ? updatedPost : p)));
+    setEditingPost(null);
+    setIsModalOpen(false);
+  };
+
+  // Delete Post
+  const deletePost = (id: number) => {
+    setPosts(posts.filter((p) => p.id !== id));
+  };
 
   if (loading) return <Loader />;
 
@@ -43,6 +60,7 @@ const PostList = () => {
           Posts
         </h1>
 
+        {/* Posts Grid */}
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {posts.map((post) => {
             const user = users.find((u) => u.id === post.userId);
@@ -68,9 +86,7 @@ const PostList = () => {
                     Edit
                   </button>
                   <button
-                    onClick={() =>
-                      setPosts(posts.filter((p) => p.id !== post.id))
-                    }
+                    onClick={() => deletePost(post.id)}
                     className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition flex-1"
                   >
                     Delete
@@ -80,6 +96,34 @@ const PostList = () => {
             );
           })}
         </div>
+
+        {/* Floating Add Post Button */}
+        <button
+          onClick={() => {
+            setEditingPost(null);
+            setIsModalOpen(true);
+          }}
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-3xl flex items-center justify-center shadow-lg transition"
+        >
+          +
+        </button>
+
+        {/* Modal */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          title={editingPost ? "Edit Post" : "Add Post"}
+        >
+          <PostForm
+            editingPost={editingPost}
+            onSubmit={
+              editingPost
+                ? (data) => updatePost({ ...editingPost, ...data })
+                : addPost
+            }
+            users={users}
+          />
+        </Modal>
       </div>
     </div>
   );
