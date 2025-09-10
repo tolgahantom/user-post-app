@@ -12,6 +12,10 @@ const PostList = () => {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 5;
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -53,6 +57,12 @@ const PostList = () => {
 
   if (loading) return <Loader />;
 
+  // Pagination calculations
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(posts.length / postsPerPage);
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="container mx-auto">
@@ -60,9 +70,8 @@ const PostList = () => {
           Posts
         </h1>
 
-        {/* Posts Grid */}
         <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {posts.map((post) => {
+          {currentPosts.map((post) => {
             const user = users.find((u) => u.id === post.userId);
             return (
               <div
@@ -97,7 +106,30 @@ const PostList = () => {
           })}
         </div>
 
-        {/* Floating Add Post Button */}
+        <div className="fixed bottom-0 left-0 w-full bg-gray-100 py-3 flex justify-center gap-2 shadow-inner">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            className="px-4 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+            disabled={currentPage === 1}
+          >
+            Prev
+          </button>
+
+          <span className="px-4 py-1 font-bold">
+            {currentPage} / {totalPages}
+          </span>
+
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            className="px-4 py-1 rounded bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+
         <button
           onClick={() => {
             setEditingPost(null);
@@ -108,7 +140,6 @@ const PostList = () => {
           +
         </button>
 
-        {/* Modal */}
         <Modal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
